@@ -300,8 +300,6 @@ def train(dataset):
     train_op = tf.group(apply_gradient_op, variables_averages_op,
                         batchnorm_updates_op)
 
-    # Create a saver.
-    saver = tf.train.Saver(tf.global_variables())
 
     # Build the summary operation from the last tower summaries.
     summary_op = tf.summary.merge(summaries)
@@ -317,14 +315,25 @@ def train(dataset):
         log_device_placement=FLAGS.log_device_placement))
     sess.run(init)
 
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(tf.get_collection(slim.variables.VARIABLES_TO_RESTORE));
+    pp.pprint(tf.global_variables());
+
     if FLAGS.pretrained_model_checkpoint_path:
-      assert tf.gfile.Exists(FLAGS.pretrained_model_checkpoint_path)
+      #assert tf.gfile.Exists(FLAGS.pretrained_model_checkpoint_path)
       variables_to_restore = tf.get_collection(
           slim.variables.VARIABLES_TO_RESTORE)
-      restorer = tf.train.Saver(variables_to_restore)
-      restorer.restore(sess, FLAGS.pretrained_model_checkpoint_path)
+      #saver = tf.train.import_meta_graph(FLAGS.pretrained_model_checkpoint_path + '.meta')
+      #saver = tf.train.Saver(variables_to_restore)
+      saver = tf.train.Saver(tf.global_variables())
+      saver.restore(sess, FLAGS.pretrained_model_checkpoint_path)
       print('%s: Pre-trained model restored from %s' %
             (datetime.now(), FLAGS.pretrained_model_checkpoint_path))
+    else:
+      # Create a saver.
+      saver = tf.train.Saver(tf.global_variables())
+
 
     # Start the queue runners.
     tf.train.start_queue_runners(sess=sess)
@@ -352,6 +361,6 @@ def train(dataset):
         summary_writer.add_summary(summary_str, step)
 
       # Save the model checkpoint periodically.
-      if step % 5000 == 0 or (step + 1) == FLAGS.max_steps:
+      if step % 100 == 0 or (step + 1) == FLAGS.max_steps:
         checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
         saver.save(sess, checkpoint_path, global_step=step)

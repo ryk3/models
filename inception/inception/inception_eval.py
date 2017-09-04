@@ -29,7 +29,12 @@ import tensorflow as tf
 
 from inception import image_processing
 from inception import inception_model as inception
+from inception.slim import slim
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+pp.pprint(tf.get_collection(slim.variables.VARIABLES_TO_RESTORE));
+pp.pprint(tf.global_variables());
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -63,6 +68,7 @@ def _eval_once(saver, summary_writer, top_1_op, top_5_op, summary_op):
     summary_op: Summary op.
   """
   with tf.Session() as sess:
+    tf.train.write_graph(sess.graph.as_graph_def(), "/tmp/animal_data/", "graph.pb")
     ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
     if ckpt and ckpt.model_checkpoint_path:
       if os.path.isabs(ckpt.model_checkpoint_path):
